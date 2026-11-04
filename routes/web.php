@@ -16,8 +16,9 @@ use App\Http\Controllers\AuthController;
 Route::get('/', [MovieController::class, 'index'])->name('home');
 Route::get('/suggestions', [MovieController::class, 'suggestions'])->name('suggestions');
 
-// Movie Details
+// Movie Details & Reviews/Comments
 Route::get('/movie/{id}', [MovieController::class, 'show'])->name('movie.show');
+Route::post('/movie/{id}/comment', [MovieController::class, 'storeComment'])->name('comment.add');
 
 // Watchlist Routes
 Route::get('/watchlist', [WatchlistController::class, 'index'])->name('watchlist.index');
