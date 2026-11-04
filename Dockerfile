@@ -22,7 +22,10 @@ COPY . .
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
+# Create SQLite database file and set permissions
+RUN mkdir -p /app/database && touch /app/database/database.sqlite
+
 EXPOSE 10000
 
-# Start Laravel built-in server
-CMD php artisan serve --host=0.0.0.0 --port=10000
+# Run migrations and start Laravel built-in server
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000
