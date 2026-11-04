@@ -57,6 +57,27 @@
                         @endif
                     </a>
                 @else
+                    <!-- PLAN TO WATCH ICON BUTTON (+) -->
+                    <a href="{{ route('watchlist.plan') }}" title="Plan to Watch" class="bg-neutral-800 hover:bg-neutral-700 text-gray-300 p-2.5 rounded-full border border-neutral-700 transition flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </a>
+
+                    <!-- WATCHED ICON BUTTON (CHECKMARK) -->
+                    <a href="{{ route('watchlist.watched') }}" title="Watched Movies" class="bg-neutral-800 hover:bg-neutral-700 text-gray-300 p-2.5 rounded-full border border-neutral-700 transition flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </a>
+
+                    <!-- WATCHLIST FOLDER ICON BUTTON -->
+                    <a href="{{ route('watchlist.index') }}" title="My Watchlist Folder" class="bg-neutral-800 hover:bg-neutral-700 text-gray-300 p-2.5 rounded-full border border-neutral-700 transition flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                    </a>
+
                     <!-- USER REQUEST MOVIE BUTTON -->
                     <a href="{{ route('movie.request.form') }}" title="Request a Movie" class="bg-neutral-800 hover:bg-neutral-700 text-gray-300 p-2.5 rounded-full border border-neutral-700 transition flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
