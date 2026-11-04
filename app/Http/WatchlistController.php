@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class WatchlistController extends Controller
 {
-    // Ipakita ang buong Watchlist folder
+    // Folder View: Lahat ng Watchlist
     public function index()
     {
         $user = session('user');
@@ -22,7 +22,7 @@ class WatchlistController extends Controller
         return view('watchlist.index', compact('watchlist'));
     }
 
-    // Ipakita ang Plan to Watch folder
+    // Folder View: Plan to Watch
     public function plan()
     {
         $user = session('user');
@@ -38,7 +38,7 @@ class WatchlistController extends Controller
         return view('watchlist.plan', compact('watchlist'));
     }
 
-    // Ipakita ang Watched folder
+    // Folder View: Watched
     public function watched()
     {
         $user = session('user');
@@ -54,7 +54,7 @@ class WatchlistController extends Controller
         return view('watchlist.watched', compact('watchlist'));
     }
 
-    // I-save ang pelikula sa Plan to Watch o Watched
+    // Pag-save o Update ng status (Plan to Watch / Watched)
     public function store(Request $request)
     {
         $user = session('user');
@@ -64,22 +64,19 @@ class WatchlistController extends Controller
 
         $userId = $user['id'] ?? 1;
         $movieId = $request->input('id');
-        $status = $request->input('status', 'plan'); // 'plan' o 'watched'
+        $status = $request->input('status', 'plan');
 
-        // Suriin kung naka-save na sa database para sa user na ito
         $exists = DB::table('watchlist')
             ->where('user_id', $userId)
             ->where('movie_id', $movieId)
             ->first();
 
         if ($exists) {
-            // I-update ang status kung sakaling lumipat ng folder
             DB::table('watchlist')
                 ->where('user_id', $userId)
                 ->where('movie_id', $movieId)
                 ->update(['status' => $status]);
         } else {
-            // I-insert ang bagong record
             DB::table('watchlist')->insert([
                 'user_id' => $userId,
                 'movie_id' => $movieId,
@@ -93,6 +90,6 @@ class WatchlistController extends Controller
         }
 
         $folderName = $status === 'watched' ? 'Watched' : 'Plan to Watch';
-        return back()->with('success', "Matagumpay na naidagdag sa iyong {$folderName} folder!");
+        return back()->with('success', "Naidagdag sa iyong {$folderName} folder!");
     }
 }
