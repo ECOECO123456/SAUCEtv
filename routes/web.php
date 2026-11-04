@@ -24,6 +24,7 @@ Route::post('/movie/{id}/comment', [MovieController::class, 'storeComment'])->na
 Route::get('/watchlist', [WatchlistController::class, 'index'])->name('watchlist.index');
 Route::get('/watchlist/plan', [WatchlistController::class, 'plan'])->name('watchlist.plan');
 Route::get('/watchlist/watched', [WatchlistController::class, 'watched'])->name('watchlist.watched');
+Route::post('/watchlist/store', [WatchlistController::class, 'store'])->name('watchlist.store'); // <-- Idagdag ito
 
 // User Movie Requests & History
 Route::get('/request-movie', [RequestController::class, 'create'])->name('movie.request.form');
