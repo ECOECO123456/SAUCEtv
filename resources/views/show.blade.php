@@ -129,10 +129,40 @@
                     </div>
                 </div>
 
-                <!-- ADD / REMOVE FROM MY LIBRARY BUTTON -->
-                <button onclick="toggleLibrary('{{ $movie['id'] }}', '{{ addslashes($title) }}', '{{ $mediaType }}', '{{ $movie['poster_path'] ?? '' }}')" id="libraryBtn" class="bg-neutral-800 hover:bg-neutral-700 text-brand border border-neutral-700 text-xs font-bold px-5 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
-                    📁 <span id="libraryBtnText">Add to My Library</span>
-                </button>
+                <!-- PLAN TO WATCH & WATCHED BUTTONS -->
+                @if(session()->has('user'))
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <!-- Plan to Watch Button -->
+                        <form action="{{ route('watchlist.store') }}" method="POST" class="inline">
+                            @csrf
+                            <input type="hidden" name="id" value="{{ $id }}">
+                            <input type="hidden" name="title" value="{{ $title }}">
+                            <input type="hidden" name="poster_path" value="{{ $movie['poster_path'] ?? '' }}">
+                            <input type="hidden" name="type" value="{{ $mediaType }}">
+                            <input type="hidden" name="status" value="plan">
+                            <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
+                                ➕ Plan to Watch
+                            </button>
+                        </form>
+
+                        <!-- Watched Button -->
+                        <form action="{{ route('watchlist.store') }}" method="POST" class="inline">
+                            @csrf
+                            <input type="hidden" name="id" value="{{ $id }}">
+                            <input type="hidden" name="title" value="{{ $title }}">
+                            <input type="hidden" name="poster_path" value="{{ $movie['poster_path'] ?? '' }}">
+                            <input type="hidden" name="type" value="{{ $mediaType }}">
+                            <input type="hidden" name="status" value="watched">
+                            <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
+                                ✓ Watched
+                            </button>
+                        </form>
+                    </div>
+                @else
+                    <a href="{{ route('login') }}" class="bg-neutral-800 hover:bg-neutral-700 text-gray-300 border border-neutral-700 text-xs font-bold px-5 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
+                        🔑 Login to Save
+                    </a>
+                @endif
             </div>
 
             <p class="text-gray-300 text-sm leading-relaxed mb-6">{{ $overview }}</p>
@@ -233,7 +263,7 @@
         &copy; {{ date('Y') }} SAUCEtv Streaming Portal. All rights reserved.
     </footer>
 
-    <!-- SERVER SWITCHING & LOCALSTORAGE JAVASCRIPT LOGIC -->
+    <!-- SERVER SWITCHING JAVASCRIPT LOGIC -->
     <script>
         function switchServer(serverType, streamUrl) {
             const container = document.getElementById('playerContainer');
@@ -265,52 +295,6 @@
             event.target.classList.remove('bg-neutral-950', 'text-gray-300');
             event.target.classList.add('bg-brand', 'text-neutral-950');
         }
-
-        const username = "{{ session('user')['username'] ?? 'guest' }}";
-        const storageKey = `sauce_library_${username}`;
-
-        function checkLibraryStatus() {
-            if (username === 'guest') return;
-            let library = JSON.parse(localStorage.getItem(storageKey)) || [];
-            const movieId = "{{ $movie['id'] }}";
-            const exists = library.some(item => item.id == movieId);
-            const btnText = document.getElementById('libraryBtnText');
-            if (exists) {
-                btnText.innerText = "Remove from Library";
-            } else {
-                btnText.innerText = "Add to My Library";
-            }
-        }
-
-        function toggleLibrary(id, title, type, posterPath) {
-            if (username === 'guest') {
-                alert('Please log in first to save movies to your library.');
-                window.location.href = "{{ route('login') }}";
-                return;
-            }
-
-            let library = JSON.parse(localStorage.getItem(storageKey)) || [];
-            const index = library.findIndex(item => item.id == id);
-
-            if (index > -1) {
-                library.splice(index, 1);
-                alert('Removed from your Library.');
-            } else {
-                library.push({
-                    id: id,
-                    title: title,
-                    type: type,
-                    poster_path: posterPath,
-                    added_at: new Date().toLocaleDateString()
-                });
-                alert('Added to your Library!');
-            }
-
-            localStorage.setItem(storageKey, JSON.stringify(library));
-            checkLibraryStatus();
-        }
-
-        window.onload = checkLibraryStatus;
     </script>
 </body>
 </html>
