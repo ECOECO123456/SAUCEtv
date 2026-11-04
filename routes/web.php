@@ -33,7 +33,10 @@ Route::get('/my-requests', [RequestController::class, 'history'])->name('user.re
 Route::get('/admin/requests', [RequestController::class, 'adminRequests'])->name('admin.requests');
 Route::get('/admin/movie/delete/{id}', [MovieController::class, 'destroy'])->name('admin.movie.delete');
 
-// Authentication Routes
+// Authentication Routes (Login, Register, Logout)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.post'); // Updated with name('login.post')
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
