@@ -48,7 +48,15 @@ Route::post('/request-movie', [RequestController::class, 'store'])->name('movie.
 Route::get('/my-requests', [RequestController::class, 'history'])->name('user.requests.history');
 
 // Admin Routes (Protektado para sa admin)
-Route::middleware(['admin'])->group(function () {
+Route::middleware(function ($request, $next) {
+    $user = session('user');
+    if (!$user || ($user['is_admin'] ?? 0) != 1) {
+        return redirect()->route('home')->with('error', 'Unauthorized access.');
+    }
+    return $next($request);
+})->group(function () {
+
+
     Route::get('/admin/requests', [RequestController::class, 'adminRequests'])->name('admin.requests');
     Route::get('/admin/movie/delete/{id}', [MovieController::class, 'destroy'])->name('admin.movie.delete');
     Route::post('/admin/requests/{id}/respond', [RequestController::class, 'respondToRequest'])->name('admin.requests.respond');
