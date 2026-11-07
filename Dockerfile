@@ -19,8 +19,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install dependencies (Idinagdag ang --no-scripts para hindi mag-error sa build phase)
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Create SQLite database file and set permissions
 RUN mkdir -p /app/database \
