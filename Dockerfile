@@ -23,8 +23,10 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader
 
 # Create SQLite database file and set permissions
-RUN mkdir -p /app/database && touch /app/database/database.sqlite
-
+RUN mkdir -p /app/database \
+    && touch /app/database/database.sqlite \
+    && mkdir -p /app/storage/framework/views /app/storage/framework/sessions /app/storage/framework/cache /app/bootstrap/cache \
+    && chmod -R 777 /app/storage /app/bootstrap/cache /app/database
 EXPOSE 10000
 
 # Run migrations and start Laravel built-in server
