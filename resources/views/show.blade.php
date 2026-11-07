@@ -20,6 +20,50 @@
 </head>
 <body class="bg-neutral-950 text-white font-sans selection:bg-brand selection:text-black min-h-screen flex flex-col justify-between">
 
+    <!-- FLOATING TOAST CONTAINER -->
+    <div id="floatingToastContainer" class="fixed top-24 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- TOP-RIGHT FLOATING TOAST NOTIFICATION -->
+    @if (session('success'))
+        <div id="toast-notification" 
+             class="fixed top-24 right-5 z-[9999] flex items-center gap-3 bg-neutral-900 border border-neutral-800 text-white px-5 py-4 rounded-2xl shadow-2xl transition-all duration-500 transform opacity-100 max-w-sm">
+            
+            <div class="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-950 border border-emerald-800 shrink-0 text-emerald-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+
+            <div class="flex flex-col flex-grow">
+                <span class="text-[10px] font-bold tracking-wider text-emerald-400 uppercase">SUCCESS</span>
+                <span class="text-xs font-medium text-gray-200">{{ session('success') }}</span>
+            </div>
+
+            <button onclick="dismissToast()" class="text-gray-400 hover:text-white text-base font-bold focus:outline-none ml-2">
+                &times;
+            </button>
+        </div>
+
+        <script>
+            setTimeout(() => {
+                const toast = document.getElementById('toast-notification');
+                if (toast) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-10px)';
+                    setTimeout(() => toast.remove(), 500);
+                }
+            }, 3500);
+
+            function dismissToast() {
+                const toast = document.getElementById('toast-notification');
+                if (toast) {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }
+        </script>
+    @endif
+
     <!-- HEADER NAVIGATION -->
     <header class="flex justify-between items-center px-8 py-4 bg-neutral-900/90 backdrop-blur-md fixed top-0 w-full z-50 border-b border-neutral-800">
         <a href="{{ route('home') }}" class="text-3xl font-black tracking-wider text-brand">SAUCE<span class="text-white">tv</span></a>
@@ -32,9 +76,12 @@
                 <span class="text-xs font-bold text-gray-300 bg-neutral-900 px-3 py-2 rounded-full border border-neutral-800">
                     👤 {{ session('user')['username'] }} @if(session('user')['role'] === 'admin') <span class="text-brand">(Admin)</span> @endif
                 </span>
-                <a href="{{ route('logout') }}" class="text-xs font-bold bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/40 px-3 py-2 rounded-full transition">
-                    Logout
-                </a>
+                <form action="{{ route('logout') }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="text-xs font-bold bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/40 px-3 py-2 rounded-full transition">
+                        Logout
+                    </button>
+                </form>
             @else
                 <a href="{{ route('login') }}" class="text-xs font-bold bg-brand hover:bg-brandDark text-neutral-950 px-4 py-2 rounded-full transition flex items-center gap-1 shadow-md">
                     🔑 Login
@@ -49,12 +96,6 @@
         @if(session('error'))
             <div class="mb-6 bg-red-500/10 border border-red-500/50 text-red-400 text-xs p-4 rounded-2xl text-center font-bold">
                 {{ session('error') }}
-            </div>
-        @endif
-
-        @if(session('success'))
-            <div class="mb-6 bg-green-500/10 border border-green-500/50 text-green-400 text-xs p-4 rounded-2xl text-center font-bold">
-                {{ session('success') }}
             </div>
         @endif
 
@@ -83,31 +124,48 @@
                         ⚡ Admin Upload File
                     </button>
                 @endif
-                <button onclick="switchServer('vidsrc', 'https://vidsrc.to/embed/{{ $mediaType }}/{{ $id }}')" class="server-btn px-3 py-1.5 rounded-xl text-xs font-bold transition border border-neutral-800 bg-neutral-950 text-gray-300 hover:text-white hover:bg-neutral-800">
+                <button onclick="switchServer('vidsrc', getVidsrcUrl('vidsrc'))" class="server-btn px-3 py-1.5 rounded-xl text-xs font-bold transition border border-neutral-800 bg-neutral-950 text-gray-300 hover:text-white hover:bg-neutral-800">
                     Server 1 (Vidsrc)
                 </button>
-                <button onclick="switchServer('vidsrcme', 'https://vidsrc.me/embed/{{ $mediaType }}?id={{ $id }}')" class="server-btn px-3 py-1.5 rounded-xl text-xs font-bold transition border border-neutral-800 bg-neutral-950 text-gray-300 hover:text-white hover:bg-neutral-800">
+                <button onclick="switchServer('vidsrcme', getVidsrcUrl('vidsrcme'))" class="server-btn px-3 py-1.5 rounded-xl text-xs font-bold transition border border-neutral-800 bg-neutral-950 text-gray-300 hover:text-white hover:bg-neutral-800">
                     Server 2 (Vidsrc.me)
                 </button>
-                <button onclick="switchServer('superembed', 'https://multiembed.mov/?video_id={{ $id }}&tmdb=1')" class="server-btn px-3 py-1.5 rounded-xl text-xs font-bold transition border border-neutral-800 bg-neutral-950 text-gray-300 hover:text-white hover:bg-neutral-800">
+                <button onclick="switchServer('superembed', getVidsrcUrl('superembed'))" class="server-btn px-3 py-1.5 rounded-xl text-xs font-bold transition border border-neutral-800 bg-neutral-950 text-gray-300 hover:text-white hover:bg-neutral-800">
                     Server 3 (MultiEmbed)
                 </button>
             </div>
         </div>
 
+        <!-- SEASONS & EPISODES SELECTOR (KUNG TV SHOW) -->
+        @if($mediaType === 'tv')
+            <div id="tvSeasonsEpisodesWrapper" class="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 mb-4 shadow-md space-y-3">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">📺 Select Season:</span>
+                    <select id="seasonSelect" onchange="changeSeason(this.value)" class="bg-neutral-950 text-xs text-white font-bold rounded-xl px-4 py-2 border border-neutral-800 focus:outline-none focus:ring-1 focus:ring-brand">
+                        <option value="1">Loading seasons...</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-800">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mr-2">🎬 Select Episode:</span>
+                    <div id="episodeButtonsContainer" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1">
+                        <span class="text-xs text-gray-500">Loading episodes...</span>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- VIDEO PLAYER CONTAINER -->
         <div class="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-neutral-800 mb-8" id="playerContainer">
             @if(!empty($movie['video_url']))
-                <!-- LOCAL UPLOADED VIDEO PLAYER DEFAULT -->
                 <video id="localVideoPlayer" controls autoplay class="w-full h-full object-contain" poster="{{ $poster }}">
                     <source src="{{ $movie['video_url'] }}" type="video/mp4">
                     Your browser does not support playing this video.
                 </video>
             @else
-                <!-- EMBEDDED STREAMING PLAYER DEFAULT -->
                 <iframe 
                     id="embedIframe"
-                    src="https://vidsrc.to/embed/{{ $mediaType }}/{{ $id }}" 
+                    src="{{ $mediaType === 'tv' ? 'https://vidsrc.to/embed/tv/' . $id . '/1/1' : 'https://vidsrc.to/embed/movie/' . $id }}" 
                     class="w-full h-full border-0" 
                     allowfullscreen>
                 </iframe>
@@ -132,31 +190,16 @@
                 <!-- PLAN TO WATCH & WATCHED BUTTONS -->
                 @if(session()->has('user'))
                     <div class="flex items-center gap-2 flex-wrap">
-                        <!-- Plan to Watch Button -->
-                        <form action="{{ route('watchlist.store') }}" method="POST" class="inline">
-                            @csrf
-                            <input type="hidden" name="id" value="{{ $id }}">
-                            <input type="hidden" name="title" value="{{ $title }}">
-                            <input type="hidden" name="poster_path" value="{{ $movie['poster_path'] ?? '' }}">
-                            <input type="hidden" name="type" value="{{ $mediaType }}">
-                            <input type="hidden" name="status" value="plan">
-                            <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
-                                ➕ Plan to Watch
-                            </button>
-                        </form>
-
-                        <!-- Watched Button -->
-                        <form action="{{ route('watchlist.store') }}" method="POST" class="inline">
-                            @csrf
-                            <input type="hidden" name="id" value="{{ $id }}">
-                            <input type="hidden" name="title" value="{{ $title }}">
-                            <input type="hidden" name="poster_path" value="{{ $movie['poster_path'] ?? '' }}">
-                            <input type="hidden" name="type" value="{{ $mediaType }}">
-                            <input type="hidden" name="status" value="watched">
-                            <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
-                                ✓ Watched
-                            </button>
-                        </form>
+                        <button type="button" 
+                                onclick="updateWatchlist('{{ route('watchlist.store') }}', '{{ $id }}', '{{ addslashes($title) }}', '{{ $movie['poster_path'] ?? '' }}', '{{ $mediaType }}', 'plan')" 
+                                class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
+                            ➕ Plan to Watch
+                        </button>
+                        <button type="button" 
+                                onclick="updateWatchlist('{{ route('watchlist.store') }}', '{{ $id }}', '{{ addslashes($title) }}', '{{ $movie['poster_path'] ?? '' }}', '{{ $mediaType }}', 'watched')" 
+                                class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
+                            ✓ Watched
+                        </button>
                     </div>
                 @else
                     <a href="{{ route('login') }}" class="bg-neutral-800 hover:bg-neutral-700 text-gray-300 border border-neutral-700 text-xs font-bold px-5 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
@@ -227,22 +270,31 @@
                 </div>
             @endif
 
+           
             <!-- COMMENTS LIST CONTAINER -->
             <div class="space-y-4">
                 @if(isset($comments) && count($comments) > 0)
                     @foreach($comments as $com)
+                    @php
+                        // Ginagawa nitong flexible kung ang $com ay object o array man
+                        $username = is_object($com) ? ($com->username ?? 'User') : ($com['username'] ?? 'User');
+                        $rating = is_object($com) ? ($com->rating ?? 8) : ($com['rating'] ?? 8);
+                        $createdAt = is_object($com) ? ($com->created_at ?? now()) : ($com['created_at'] ?? now());
+                        $commentText = is_object($com) ? ($com->comment ?? '') : ($com['comment'] ?? '');
+                        $comId = is_object($com) ? ($com->id ?? rand()) : ($com['id'] ?? rand());
+                    @endphp
                     <div class="bg-neutral-950 p-5 rounded-2xl border border-neutral-800 flex justify-between items-start gap-4">
                         <div class="space-y-1.5">
                             <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-xs font-bold text-brand">@ {{ $com->username }}</span>
-                                <span class="text-[10px] bg-neutral-900 text-yellow-400 px-2 py-0.5 rounded font-bold border border-neutral-800">★ {{ $com->rating }}/10</span>
-                                <span class="text-[10px] text-gray-500">{{ \Carbon\Carbon::parse($com->created_at)->diffForHumans() }}</span>
+                                <span class="text-xs font-bold text-brand">@ {{ $username }}</span>
+                                <span class="text-[10px] bg-neutral-900 text-yellow-400 px-2 py-0.5 rounded font-bold border border-neutral-800">★ {{ $rating }}/10</span>
+                                <span class="text-[10px] text-gray-500">{{ \Carbon\Carbon::parse($createdAt)->diffForHumans() }}</span>
                             </div>
-                            <p class="text-xs text-gray-300 leading-relaxed">{{ $com->comment }}</p>
+                            <p class="text-xs text-gray-300 leading-relaxed">{{ $commentText }}</p>
                         </div>
 
                         @if(session()->has('user') && session('user')['role'] === 'admin')
-                        <a href="{{ route('admin.comment.delete', ['id' => $com->id]) }}" onclick="return confirm('Delete this comment?')" class="text-red-400 hover:text-red-300 text-[10px] font-bold bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20 transition shrink-0">
+                        <a href="{{ route('admin.comment.delete', ['id' => $comId]) }}" onclick="return confirm('Delete this comment?')" class="text-red-400 hover:text-red-300 text-[10px] font-bold bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20 transition shrink-0">
                             Delete
                         </a>
                         @endif
@@ -263,9 +315,128 @@
         &copy; {{ date('Y') }} SAUCEtv Streaming Portal. All rights reserved.
     </footer>
 
-    <!-- SERVER SWITCHING JAVASCRIPT LOGIC -->
+    <!-- JAVASCRIPT FOR SEASONS, EPISODES & SERVERS -->
     <script>
+        const mediaType = "{{ $mediaType }}";
+        const tmdbId = "{{ $id }}";
+        const apiKey = "c215328e9be5d98fa65f57a66b2405a4";
+        
+        let currentSeason = 1;
+        let currentEpisode = 1;
+        let currentServerType = 'vidsrc';
+        let currentCustomVideoUrl = "{{ $movie['video_url'] ?? '' }}";
+
+        document.addEventListener("DOMContentLoaded", function() {
+            if (mediaType === 'tv') {
+                fetchTVDetails();
+            }
+        });
+
+        function fetchTVDetails() {
+            fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${apiKey}`)
+                .then(res => res.json())
+                .then(data => {
+                    const seasonSelect = document.getElementById('seasonSelect');
+                    seasonSelect.innerHTML = '';
+
+                    if (data.seasons && data.seasons.length > 0) {
+                        data.seasons.forEach(season => {
+                            if (season.season_number >= 0) {
+                                const opt = document.createElement('option');
+                                opt.value = season.season_number;
+                                opt.innerText = `Season ${season.season_number} (${season.episode_count} Episodes)`;
+                                seasonSelect.appendChild(opt);
+                            }
+                        });
+                        
+                        const firstSeason = data.seasons.find(s => s.season_number > 0) ? data.seasons.find(s => s.season_number > 0).season_number : 1;
+                        seasonSelect.value = firstSeason;
+                        fetchEpisodes(firstSeason);
+                    } else {
+                        seasonSelect.innerHTML = '<option value="1">Season 1</option>';
+                        fetchEpisodes(1);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching TV details:", err);
+                    fetchEpisodes(1);
+                });
+        }
+
+        function fetchEpisodes(seasonNumber) {
+            currentSeason = seasonNumber;
+            fetch(`/tv/${tmdbId}/season/${seasonNumber}/episodes`)
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('episodeButtonsContainer');
+                    container.innerHTML = '';
+                    
+                    if(data.episodes && data.episodes.length > 0) {
+                        data.episodes.forEach(ep => {
+                            const btn = document.createElement('button');
+                            btn.type = 'button';
+                            btn.className = `px-3 py-1.5 rounded-lg text-xs font-bold transition border ${ep.episode_number === currentEpisode ? 'bg-brand text-neutral-950 border-brand' : 'bg-neutral-950 text-gray-300 border-neutral-800 hover:bg-neutral-800'}`;
+                            btn.innerText = `Ep ${ep.episode_number}`;
+                            btn.title = ep.name;
+                            btn.onclick = () => selectEpisode(ep.episode_number);
+                            container.appendChild(btn);
+                        });
+                    } else {
+                        container.innerHTML = '<span class="text-xs text-gray-500">No episodes found.</span>';
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching episodes:", err);
+                    document.getElementById('episodeButtonsContainer').innerHTML = '<span class="text-xs text-red-400">Failed to load episodes.</span>';
+                });
+        }
+
+        function changeSeason(seasonNum) {
+            currentSeason = seasonNum;
+            currentEpisode = 1;
+            fetchEpisodes(seasonNum);
+            updatePlayerUrl();
+        }
+
+        function selectEpisode(epNum) {
+            currentEpisode = epNum;
+            updatePlayerUrl();
+            
+            const buttons = document.querySelectorAll('#episodeButtonsContainer button');
+            buttons.forEach((btn, index) => {
+                if((index + 1) === epNum) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition border bg-brand text-neutral-950 border-brand";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition border bg-neutral-950 text-gray-300 border-neutral-800 hover:bg-neutral-800";
+                }
+            });
+        }
+
+        function getVidsrcUrl(server) {
+            if (mediaType === 'tv') {
+                if (server === 'vidsrc') return `https://vidsrc.to/embed/tv/${tmdbId}/${currentSeason}/${currentEpisode}`;
+                if (server === 'vidsrcme') return `https://vidsrc.me/embed/tv?id=${tmdbId}&s=${currentSeason}&e=${currentEpisode}`;
+                if (server === 'superembed') return `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${currentSeason}&e=${currentEpisode}`;
+            } else {
+                if (server === 'vidsrc') return `https://vidsrc.to/embed/movie/${tmdbId}`;
+                if (server === 'vidsrcme') return `https://vidsrc.me/embed/movie?id=${tmdbId}`;
+                if (server === 'superembed') return `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
+            }
+        }
+
+        function updatePlayerUrl() {
+            if (currentServerType === 'local' && currentCustomVideoUrl) return;
+            
+            const container = document.getElementById('playerContainer');
+            const url = getVidsrcUrl(currentServerType);
+            
+            container.innerHTML = `
+                <iframe src="${url}" class="w-full h-full border-0" allowfullscreen></iframe>
+            `;
+        }
+
         function switchServer(serverType, streamUrl) {
+            currentServerType = serverType;
             const container = document.getElementById('playerContainer');
             const label = document.getElementById('activeServerLabel');
 
@@ -278,15 +449,15 @@
                 `;
                 label.innerText = 'Admin Upload File';
             } else {
+                const finalUrl = getVidsrcUrl(serverType);
                 container.innerHTML = `
-                    <iframe src="${streamUrl}" class="w-full h-full border-0" allowfullscreen></iframe>
+                    <iframe src="${finalUrl}" class="w-full h-full border-0" allowfullscreen></iframe>
                 `;
                 if (serverType === 'vidsrc') label.innerText = 'Server 1 (Vidsrc)';
                 if (serverType === 'vidsrcme') label.innerText = 'Server 2 (Vidsrc.me)';
                 if (serverType === 'superembed') label.innerText = 'Server 3 (MultiEmbed)';
             }
 
-            // Update button styles
             const buttons = document.querySelectorAll('.server-btn');
             buttons.forEach(btn => {
                 btn.classList.remove('bg-brand', 'text-neutral-950');
@@ -294,6 +465,42 @@
             });
             event.target.classList.remove('bg-neutral-950', 'text-gray-300');
             event.target.classList.add('bg-brand', 'text-neutral-950');
+        }
+
+        function updateWatchlist(url, id, title, posterPath, type, status) {
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ id, title, poster_path: posterPath, type, status })
+            })
+            .then(res => res.json())
+            .then(data => { if (data.success) showDynamicToast(data.message); })
+            .catch(err => console.error('Error:', err));
+        }
+
+        function showDynamicToast(message) {
+            const container = document.getElementById('floatingToastContainer');
+            const toast = document.createElement('div');
+            toast.className = "flex items-center gap-3 bg-neutral-900 border border-neutral-800 text-white px-5 py-4 rounded-2xl shadow-2xl transition-all duration-500 transform opacity-0 translate-y-[-10px] max-w-sm pointer-events-auto";
+            toast.innerHTML = `
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-emerald-950 border border-emerald-800 shrink-0 text-emerald-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div class="flex flex-col flex-grow">
+                    <span class="text-[10px] font-bold tracking-wider text-emerald-400 uppercase">SUCCESS</span>
+                    <span class="text-xs font-medium text-gray-200">${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-white text-base font-bold focus:outline-none ml-2">&times;</button>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; }, 50);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-10px)'; setTimeout(() => toast.remove(), 500); }, 3500);
         }
     </script>
 </body>

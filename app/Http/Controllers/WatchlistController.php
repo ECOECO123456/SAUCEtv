@@ -7,61 +7,33 @@ use Illuminate\Support\Facades\DB;
 
 class WatchlistController extends Controller
 {
-    // Folder View: Lahat ng Watchlist
-    public function index()
+    /**
+     * Ipakita ang buong Watchlist page na may Tab Filtering (All, Plan to Watch, Watched).
+     */
+    public function index(Request $request)
     {
         $user = session('user');
-        if (!$user) {
-            return redirect()->route('login');
+        $userId = $user['id'] ?? 1;
+        $status = $request->query('status');
+
+        $query = DB::table('watchlist')->where('user_id', $userId);
+
+        // Filter ayon sa napiling tab (plan o watched)
+        if (in_array($status, ['plan', 'watched'])) {
+            $query->where('status', $status);
         }
 
-        $watchlist = DB::table('watchlist')
-            ->where('user_id', $user['id'] ?? 1)
-            ->get();
+        $watchlist = $query->orderBy('updated_at', 'desc')->get();
 
         return view('watchlist.index', compact('watchlist'));
     }
 
-    // Folder View: Plan to Watch
-    public function plan()
-    {
-        $user = session('user');
-        if (!$user) {
-            return redirect()->route('login');
-        }
-
-        $watchlist = DB::table('watchlist')
-            ->where('user_id', $user['id'] ?? 1)
-            ->where('status', 'plan')
-            ->get();
-
-        return view('watchlist.plan', compact('watchlist'));
-    }
-
-    // Folder View: Watched
-    public function watched()
-    {
-        $user = session('user');
-        if (!$user) {
-            return redirect()->route('login');
-        }
-
-        $watchlist = DB::table('watchlist')
-            ->where('user_id', $user['id'] ?? 1)
-            ->where('status', 'watched')
-            ->get();
-
-        return view('watchlist.watched', compact('watchlist'));
-    }
-
-    // Pag-save o Update ng status (Plan to Watch / Watched)
+    /**
+     * I-save o i-update ang pelikula sa Watchlist (Plan to Watch / Watched).
+     */
     public function store(Request $request)
     {
         $user = session('user');
-        if (!$user) {
-            return redirect()->route('login');
-        }
-
         $userId = $user['id'] ?? 1;
         $movieId = $request->input('id');
         $status = $request->input('status', 'plan');
@@ -75,7 +47,10 @@ class WatchlistController extends Controller
             DB::table('watchlist')
                 ->where('user_id', $userId)
                 ->where('movie_id', $movieId)
-                ->update(['status' => $status]);
+                ->update([
+                    'status' => $status,
+                    'updated_at' => now(),
+                ]);
         } else {
             DB::table('watchlist')->insert([
                 'user_id' => $userId,
@@ -90,6 +65,16 @@ class WatchlistController extends Controller
         }
 
         $folderName = $status === 'watched' ? 'Watched' : 'Plan to Watch';
-        return back()->with('success', "Naidagdag sa iyong {$folderName} folder!");
+        $message = "Naidagdag sa iyong {$folderName} folder!";
+
+        // Kung galing sa AJAX fetch request, magbalik ng JSON response para sa floating toast
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 }

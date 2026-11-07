@@ -258,7 +258,7 @@ class MovieController extends Controller
                 'id' => $m['id'],
                 'title' => $m['title'],
                 'type' => $m['type'] ?? 'movie',
-                'url' => route('movie.show', ['id' => $m['id'], 'type' => $m['type'] ?? 'movie', 'title' => $m['title']])
+                'url' => route('show', ['type' => $m['type'] ?? 'movie', 'id' => $m['id']])
             ];
         }
 
@@ -278,7 +278,7 @@ class MovieController extends Controller
                             'id' => $item['id'],
                             'title' => $title,
                             'type' => $type,
-                            'url' => route('movie.show', ['id' => $item['id'], 'type' => $type, 'title' => $title])
+                            'url' => route('show', ['type' => $type, 'id' => $item['id']])
                         ];
                     }
                 }
@@ -289,13 +289,32 @@ class MovieController extends Controller
     }
 
     /**
-     * Display the streaming watch page for a specific title.
+     * Display the streaming watch page for a specific title (Supports TV Seasons/Episodes).
      */
-    public function show($id, Request $request)
+    public function show($type = 'movie', $id = null, Request $request = null)
     {
+        if ($id === null && is_numeric($type)) {
+            $id = $type;
+            $type = 'movie';
+        }
+
+        if ($id instanceof Request) {
+            $request = $id;
+            $id = $type;
+            $type = 'movie';
+        }
+
+        if (!$request) {
+            $request = request();
+        }
+
+        $type = $request->input('type', $type);
+        if (!in_array($type, ['movie', 'tv'])) {
+            $type = 'movie';
+        }
+
         $movie = [];
         $apiKey = 'c215328e9be5d98fa65f57a66b2405a4';
-        $type = $request->input('type', 'movie');
 
         $adminPostedMovies = session()->get('admin_posted_movies', []);
         foreach ($adminPostedMovies as $apm) {
@@ -311,7 +330,7 @@ class MovieController extends Controller
                     $response = Http::withOptions(['verify' => false])
                         ->get("https://api.themoviedb.org/3/tv/{$id}", [
                             'api_key' => $apiKey,
-                            'append_to_response' => 'credits'
+                            'append_to_response' => 'credits,seasons'
                         ]);
                     $movie = $response->json();
                 } else {
@@ -347,6 +366,23 @@ class MovieController extends Controller
     }
 
     /**
+     * AJAX endpoint para kunin ang mga episodes ng isang TV show season mula sa TMDB.
+     */
+    public function getTvEpisodes($id, $seasonNumber)
+    {
+        $apiKey = 'c215328e9be5d98fa65f57a66b2405a4';
+        try {
+            $response = Http::withOptions(['verify' => false])
+                ->get("https://api.themoviedb.org/3/tv/{$id}/season/{$seasonNumber}", [
+                    'api_key' => $apiKey
+                ]);
+            return response()->json($response->json());
+        } catch (\Exception $e) {
+            return response()->json(['episodes' => []]);
+        }
+    }
+
+    /**
      * Show movie request submission form for users.
      */
     public function showRequestForm()
@@ -361,34 +397,34 @@ class MovieController extends Controller
      * Store submitted movie request in session.
      */
     public function storeRequestMovie(Request $request)
-{
-    if (!session()->has('user')) {
-        return redirect()->route('login')->with('error', 'Unauthorized access.');
+    {
+        if (!session()->has('user')) {
+            return redirect()->route('login')->with('error', 'Unauthorized access.');
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|in:movie,tv',
+            'overview' => 'nullable|string',
+        ]);
+
+        $newRequest = [
+            'id' => rand(100000, 999999),
+            'title' => $request->input('title'),
+            'type' => $request->input('type'),
+            'poster_url' => '',
+            'overview' => $request->input('overview', 'Requested by user'),
+            'requested_by' => session('user')['username'],
+            'created_at' => now()->format('Y-m-d H:i:s'),
+            'status' => 'Pending'
+        ];
+
+        $requests = session()->get('user_movie_requests', []);
+        array_unshift($requests, $newRequest);
+        session()->put('user_movie_requests', $requests);
+
+        return redirect()->route('home')->with('success', 'Request Submitted');
     }
-
-    $request->validate([
-        'title' => 'required|string|max:255',
-        'type' => 'required|in:movie,tv',
-        'overview' => 'nullable|string',
-    ]);
-
-    $newRequest = [
-        'id' => rand(100000, 999999),
-        'title' => $request->input('title'),
-        'type' => $request->input('type'),
-        'poster_url' => '',
-        'overview' => $request->input('overview', 'Requested by user'),
-        'requested_by' => session('user')['username'],
-        'created_at' => now()->format('Y-m-d H:i:s'), // Eksaktong Petsa at Oras
-        'status' => 'Pending'
-    ];
-
-    $requests = session()->get('user_movie_requests', []);
-    array_unshift($requests, $newRequest);
-    session()->put('user_movie_requests', $requests);
-
-    return redirect()->route('home')->with('success', 'Request Submitted');
-}
 
     /**
      * Display pending requests list for Admin.
@@ -542,7 +578,7 @@ class MovieController extends Controller
             session()->put("movie_comments_{$id}", $comments);
         }
 
-        return back();
+        return back()->with('success', 'Review submitted successfully!');
     }
 
     /**
@@ -561,7 +597,7 @@ class MovieController extends Controller
                 }
             }
         }
-        return back();
+        return back()->with('success', 'Comment deleted.');
     }
 
     /**
