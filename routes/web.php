@@ -51,3 +51,8 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.po
 
 // TV-SHOWS EPISODES AJAX ROUTE
 Route::get('/tv/{id}/season/{seasonNumber}/episodes', [MovieController::class, 'getTvEpisodes'])->name('tv.episodes');
+
+//ADMIN REQUEST
+use App\Http\Controllers\RequestController;
+Route::post('/admin/requests/{id}/respond', [RequestController::class, 'respondToRequest'])
+    ->name('admin.requests.respond');

@@ -64,7 +64,7 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-neutral-950/60 border-b border-neutral-800 text-[11px] font-black text-gray-400 uppercase tracking-wider">
-                            <th class="py-4 px-6">Title</th>
+                            <th class="py-4 px-6">Title & Admin Response</th>
                             <th class="py-4 px-6">Type</th>
                             <th class="py-4 px-6">Status</th>
                             <th class="py-4 px-6 text-right">Requested Date</th>
@@ -72,11 +72,26 @@
                     </thead>
                     <tbody class="divide-y divide-neutral-800/60 text-sm">
                         @forelse($requests as $req)
-                            <tr class="hover:bg-neutral-800/40 transition">
-                                <td class="py-4 px-6 font-bold text-white">
-                                    {{ $req->title }}
+                            <tr class="hover:bg-neutral-800/40 transition align-top">
+                                <td class="py-4 px-6">
+                                    <span class="font-bold text-white block">
+                                        {{ $req->title }}
+                                    </span>
                                     @if($req->description)
                                         <p class="text-xs text-gray-400 font-normal mt-0.5">{{ $req->description }}</p>
+                                    @endif
+
+                                    <!-- BAGONG DAGDAG: Admin Response / Emoji Section -->
+                                    @if(!empty($req->admin_response) || !empty($req->admin_emoji))
+                                        <div class="mt-3 p-3 bg-neutral-950/60 border border-neutral-800 rounded-xl space-y-1">
+                                            <span class="text-[10px] font-bold text-brand uppercase tracking-wider block">Tugon ng Admin:</span>
+                                            <p class="text-xs text-gray-300 flex items-center gap-2">
+                                                @if(!empty($req->admin_emoji))
+                                                    <span class="text-lg">{{ $req->admin_emoji }}</span>
+                                                @endif
+                                                <span>{{ $req->admin_response ?? 'Walang naka-attach na mensahe.' }}</span>
+                                            </p>
+                                        </div>
                                     @endif
                                 </td>
                                 <td class="py-4 px-6">
@@ -92,6 +107,10 @@
                                     @elseif($req->status === 'approved')
                                         <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase">
                                             Approved
+                                        </span>
+                                    @elseif($req->status === 'completed')
+                                        <span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase">
+                                            Completed
                                         </span>
                                     @else
                                         <span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase">

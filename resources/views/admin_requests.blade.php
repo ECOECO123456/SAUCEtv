@@ -35,31 +35,88 @@
                         <th class="p-4">Title & Type</th>
                         <th class="p-4">Requested By</th>
                         <th class="p-4">Date & Time</th>
-                        <th class="p-4 text-center">Action</th>
+                        <th class="p-4">Tugon at Status (Admin Response)</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-800 text-xs">
                     @forelse($requests as $req)
-                        <tr class="hover:bg-neutral-800/40 transition">
+                        @php
+                            // Sinusuportahan pareho ang object o array syntax para sa data
+                            $id = is_array($req) ? $req['id'] : $req->id;
+                            $title = is_array($req) ? $req['title'] : $req->title;
+                            $type = is_array($req) ? $req['type'] : $req->type;
+                            $requestedBy = is_array($req) ? ($req['requested_by'] ?? 'Guest User') : ($req->requested_by ?? 'Guest User');
+                            $createdAt = is_array($req) ? ($req['created_at'] ?? 'N/A') : ($req->created_at ?? 'N/A');
+                            $status = is_array($req) ? ($req['status'] ?? 'pending') : ($req->status ?? 'pending');
+                            $adminEmoji = is_array($req) ? ($req['admin_emoji'] ?? '') : ($req->admin_emoji ?? '');
+                            $adminResponse = is_array($req) ? ($req['admin_response'] ?? '') : ($req->admin_response ?? '');
+                        @endphp
+                        <tr class="hover:bg-neutral-800/40 transition align-top">
                             <td class="p-4">
-                                <span class="font-bold text-white block">{{ $req['title'] }}</span>
-                                <span class="text-[10px] text-brand uppercase font-bold">{{ $req['type'] }}</span>
+                                <span class="font-bold text-white block text-sm">{{ $title }}</span>
+                                <span class="text-[10px] text-brand uppercase font-bold">{{ $type }}</span>
+                                <div class="mt-2">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold 
+                                        {{ $status == 'approved' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : '' }}
+                                        {{ $status == 'pending' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : '' }}
+                                        {{ $status == 'completed' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : '' }}
+                                        {{ $status == 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : '' }}">
+                                        Status: {{ ucfirst($status) }}
+                                    </span>
+                                </div>
                             </td>
                             <td class="p-4 font-semibold text-emerald-400">
-                                👤 {{ $req['requested_by'] ?? 'Guest User' }}
+                                👤 {{ $requestedBy }}
                             </td>
                             <td class="p-4 text-gray-400 font-mono">
-                                📅 {{ $req['created_at'] ?? 'N/A' }}
+                                📅 {{ $createdAt }}
                             </td>
-                            <td class="p-4 text-center">
-                                <div class="flex justify-center gap-2">
-                                    <a href="/admin/requests/approve/{{ $req['id'] }}" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600/40 px-3 py-1.5 rounded-lg text-[10px] font-bold transition">
-                                        ✓ Approve
-                                    </a>
-                                    <a href="/admin/requests/delete/{{ $req['id'] }}" onclick="return confirm('Dismiss request?')" class="bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/40 px-3 py-1.5 rounded-lg text-[10px] font-bold transition">
-                                        ✕ Dismiss
-                                    </a>
-                                </div>
+                            <td class="p-4">
+                                <!-- ADMIN RESPONSE FORM -->
+                                <form action="{{ route('admin.requests.respond', $id) }}" method="POST" class="bg-neutral-950/60 p-3 rounded-xl border border-neutral-800 space-y-2">
+                                    @csrf
+                                    
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <!-- Status Select -->
+                                        <div>
+                                            <label class="block text-[10px] text-gray-400 mb-1 font-bold">Baguhin ang Status:</label>
+                                            <select name="status" class="w-full bg-neutral-900 border border-neutral-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand">
+                                                <option value="pending" {{ $status == 'pending' ? 'selected' : '' }}>Pending</option>
+                                                <option value="approved" {{ $status == 'approved' ? 'selected' : '' }}>Approved</option>
+                                                <option value="completed" {{ $status == 'completed' ? 'selected' : '' }}>Completed</option>
+                                                <option value="rejected" {{ $status == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Emoji Select -->
+                                        <div>
+                                            <label class="block text-[10px] text-gray-400 mb-1 font-bold">Admin Emoji:</label>
+                                            <select name="admin_emoji" class="w-full bg-neutral-900 border border-neutral-700 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand">
+                                                <option value="">(Wala)</option>
+                                                <option value="👍" {{ $adminEmoji == '👍' ? 'selected' : '' }}>👍 Approved</option>
+                                                <option value="❤️" {{ $adminEmoji == '❤️' ? 'selected' : '' }}>❤️ Love it</option>
+                                                <option value="🍿" {{ $adminEmoji == '🍿' ? 'selected' : '' }}>🍿 Available na</option>
+                                                <option value="❌" {{ $adminEmoji == '❌' ? 'selected' : '' }}>❌ Rejected</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Message Textarea -->
+                                    <div>
+                                        <label class="block text-[10px] text-gray-400 mb-1 font-bold">Mensahe / Tugon sa User:</label>
+                                        <textarea name="admin_response" rows="2" class="w-full bg-neutral-900 border border-neutral-700 text-white text-xs rounded-lg p-2 focus:outline-none focus:border-brand" placeholder="Mag-iwan ng mensahe o paliwanag...">{{ $adminResponse }}</textarea>
+                                    </div>
+
+                                    <!-- Action Submit & Quick Delete -->
+                                    <div class="flex justify-between items-center pt-1">
+                                        <button type="submit" class="bg-brand hover:bg-brandDark text-neutral-950 font-bold px-3 py-1.5 rounded-lg text-xs transition">
+                                            I-save ang Tugon
+                                        </button>
+                                        <a href="/admin/requests/delete/{{ $id }}" onclick="return confirm('Sigurado ka bang nais mong burahin ang request na ito?')" class="text-red-400 hover:text-red-300 text-[10px] font-bold transition">
+                                            Huwag I-approve / Tanggalin
+                                        </a>
+                                    </div>
+                                </form>
                             </td>
                         </tr>
                     @empty

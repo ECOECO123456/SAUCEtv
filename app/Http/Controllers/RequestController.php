@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Notifications\NewMovieRequestNotification;
+use Illuminate\Support\Facades\Notification;
 
 class RequestController extends Controller
 {
@@ -20,7 +23,7 @@ class RequestController extends Controller
         $user = session('user');
         $userId = $user['id'] ?? 1;
 
-        DB::table('movie_requests')->insert([
+        $requestId = DB::table('movie_requests')->insertGetId([
             'user_id' => $userId,
             'title' => $request->input('title'),
             'type' => $request->input('type', 'movie'),
@@ -29,6 +32,16 @@ class RequestController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        // Kunin ang bagong ginawang request bilang object para sa notification
+        $movieRequest = DB::table('movie_requests')->where('id', $requestId)->first();
+
+        // Hanapin ang mga admin (halimbawa: mga user na may is_admin == 1 o pwede mong i-adjust depende sa user role mo)
+        $admins = User::where('is_admin', 1)->get();
+
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new NewMovieRequestNotification($movieRequest));
+        }
 
         // Mananatili sa request form page at magpapadala ng success message para sa floating toast
         return redirect()->back()->with('success', 'Request Submitted');
@@ -58,5 +71,24 @@ class RequestController extends Controller
             ->get();
 
         return view('admin_requests', compact('requests', 'pendingRequestsCount'));
+    }
+
+    // Magdagdag ng tugon (emoji at mensahe) at mag-update ng status mula sa admin
+    public function respondToRequest(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'admin_emoji' => 'nullable|string|max:10',
+            'admin_response' => 'nullable|string|max:1000',
+            'status' => 'required|in:pending,approved,rejected,completed',
+        ]);
+
+        DB::table('movie_requests')->where('id', $id)->update([
+            'admin_emoji' => $validated['admin_emoji'],
+            'admin_response' => $validated['admin_response'],
+            'status' => $validated['status'],
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Naisumite na ang tugon sa request.');
     }
 }
