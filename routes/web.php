@@ -12,8 +12,17 @@ use App\Http\Controllers\AuthController;
 |--------------------------------------------------------------------------
 */
 
-// Home / Catalog & Live Search Suggestions
-Route::get('/', [MovieController::class, 'index'])->name('home');
+// 1. Landing Page: Gawing Login screen ang unang makikita pagbukas ng website
+Route::get('/', [AuthController::class, 'showLogin'])->name('login');
+
+// Guest Access Route (Papasok sa catalog/home bilang watch-only guest nang walang login)
+Route::get('/guest', function () {
+    session()->forget('user'); // Siguraduhing walang naka-login na account
+    return redirect()->route('home')->with('info', 'Browsing as Guest');
+})->name('guest.login');
+
+// Home / Catalog & Live Search Suggestions (Ilipat natin sa '/home' o panatilihing accessible)
+Route::get('/home', [MovieController::class, 'index'])->name('home');
 Route::get('/suggestions', [MovieController::class, 'suggestions'])->name('suggestions');
 
 // Movie Details & Reviews/Comments
@@ -38,9 +47,12 @@ Route::get('/request-movie', [RequestController::class, 'create'])->name('movie.
 Route::post('/request-movie', [RequestController::class, 'store'])->name('movie.request.store');
 Route::get('/my-requests', [RequestController::class, 'history'])->name('user.requests.history');
 
-// Admin Routes
-Route::get('/admin/requests', [RequestController::class, 'adminRequests'])->name('admin.requests');
-Route::get('/admin/movie/delete/{id}', [MovieController::class, 'destroy'])->name('admin.movie.delete');
+// Admin Routes (Protektado para sa admin)
+Route::middleware(['admin'])->group(function () {
+    Route::get('/admin/requests', [RequestController::class, 'adminRequests'])->name('admin.requests');
+    Route::get('/admin/movie/delete/{id}', [MovieController::class, 'destroy'])->name('admin.movie.delete');
+    Route::post('/admin/requests/{id}/respond', [RequestController::class, 'respondToRequest'])->name('admin.requests.respond');
+});
 
 // Authentication Routes (Login, Register, Logout)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -51,7 +63,3 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.po
 
 // TV-SHOWS EPISODES AJAX ROUTE
 Route::get('/tv/{id}/season/{seasonNumber}/episodes', [MovieController::class, 'getTvEpisodes'])->name('tv.episodes');
-
-//ADMIN REQUEST
-Route::post('/admin/requests/{id}/respond', [RequestController::class, 'respondToRequest'])
-    ->name('admin.requests.respond');

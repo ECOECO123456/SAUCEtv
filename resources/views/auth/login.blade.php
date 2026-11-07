@@ -32,6 +32,12 @@
             </div>
         @endif
 
+        @if(session('success'))
+            <div class="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 text-xs p-3 rounded-xl text-center">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <form action="{{ route('login.post') }}" method="POST" class="space-y-4">
             @csrf
             <div>
@@ -51,7 +57,7 @@
 
         <div class="text-center text-xs text-gray-500 space-y-2">
             <p>Don't have an account? <a href="{{ route('register') }}" class="text-brand font-bold hover:underline">Register here</a></p>
-            <p><a href="{{ route('home') }}" class="text-gray-400 hover:underline">&larr; Continue as Guest (Watch Only)</a></p>
+            <p><a href="{{ route('guest.login') }}" class="text-gray-400 hover:underline">&larr; Continue as Guest (Watch Only)</a></p>
         </div>
     </div>
 
