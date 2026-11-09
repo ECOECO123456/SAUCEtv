@@ -49,7 +49,6 @@
                             $createdAt = is_array($req) ? ($req['created_at'] ?? 'N/A') : ($req->created_at ?? 'N/A');
                             $status = is_array($req) ? ($req['status'] ?? 'pending') : ($req->status ?? 'pending');
                             $adminEmoji = is_array($req) ? ($req['admin_emoji'] ?? '') : ($req->admin_emoji ?? '');
-                            $adminResponse = is_array($req) ? ($req['admin_response'] ?? '') : ($req->admin_response ?? '');
                         @endphp
                         <tr class="hover:bg-neutral-800/40 transition align-top">
                             <td class="p-4">
@@ -99,12 +98,6 @@
                                                 <option value="❌" {{ $adminEmoji == '❌' ? 'selected' : '' }}>❌ Rejected</option>
                                             </select>
                                         </div>
-                                    </div>
-
-                                    <!-- Message Textarea -->
-                                    <div>
-                                        <label class="block text-[10px] text-gray-400 mb-1 font-bold">Mensahe / Tugon sa User:</label>
-                                        <textarea name="admin_response" rows="2" class="w-full bg-neutral-900 border border-neutral-700 text-white text-xs rounded-lg p-2 focus:outline-none focus:border-brand" placeholder="Mag-iwan ng mensahe o paliwanag...">{{ $adminResponse }}</textarea>
                                     </div>
 
                                     <!-- Action Submit & Quick Delete -->
