@@ -73,18 +73,16 @@ class RequestController extends Controller
         return view('admin_requests', compact('requests', 'pendingRequestsCount'));
     }
 
-    // Magdagdag ng tugon (emoji at mensahe) at mag-update ng status mula sa admin
+    // Magdagdag ng tugon (emoji) at mag-update ng status mula sa admin
     public function respondToRequest(Request $request, $id)
     {
         $validated = $request->validate([
             'admin_emoji' => 'nullable|string|max:10',
-            'admin_response' => 'nullable|string|max:1000',
             'status' => 'required|in:pending,approved,rejected,completed',
         ]);
 
         DB::table('movie_requests')->where('id', $id)->update([
-            'admin_emoji' => $validated['admin_emoji'],
-            'admin_response' => $validated['admin_response'],
+            'admin_emoji' => $validated['admin_emoji'] ?? null,
             'status' => $validated['status'],
             'updated_at' => now(),
         ]);
