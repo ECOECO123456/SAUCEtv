@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Idinagdag para sa seeder
+            $table->string('name')->nullable(); // Ginawang nullable para maiwasan ang NOT NULL constraint error
             $table->string('email')->unique()->nullable(); // Idinagdag para sa seeder
             $table->timestamp('email_verified_at')->nullable(); // Idinagdag para sa seeder
             $table->string('username')->unique();
