@@ -4,19 +4,43 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth; // Idinagdag para sa tamang user authentication
+use Illuminate\Support\Facades\Auth;
+use App\Models\User; // Idinagdag para mahanap ang user ID mula sa custom session
 
 class WatchlistController extends Controller
 {
+    /**
+     * Kunin ang ID ng user mula sa Laravel Auth o sa custom session.
+     */
+    private function getUserId()
+    {
+        // 1. Kung gumagamit ng Laravel native Auth
+        if (Auth::check()) {
+            return Auth::id();
+        }
+
+        // 2. Kung gumagamit ng custom session ('user' => ['username' => '...'])
+        if (session()->has('user')) {
+            $username = session('user')['username'] ?? null;
+            if ($username) {
+                $user = User::where('username', $username)->first();
+                if ($user) {
+                    return $user->id;
+                }
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Ipakita ang buong Watchlist page na may Tab Filtering (All, Plan to Watch, Watched).
      */
     public function index(Request $request)
     {
-        // Gumamit ng Laravel Auth para makuha ang ID ng tunay na nakalogin na user
-        $userId = Auth::id();
+        $userId = $this->getUserId();
 
-        // Kung walang nakalogin, i-redirect sa login page
+        // Kung walang nakalogin sa alinman sa dalawa, i-redirect sa login page
         if (!$userId) {
             return redirect()->route('login');
         }
@@ -40,8 +64,7 @@ class WatchlistController extends Controller
      */
     public function store(Request $request)
     {
-        // Gumamit ng Laravel Auth para makuha ang ID ng tunay na nakalogin na user
-        $userId = Auth::id();
+        $userId = $this->getUserId();
 
         if (!$userId) {
             if ($request->expectsJson()) {
