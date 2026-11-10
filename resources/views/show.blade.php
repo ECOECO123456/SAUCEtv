@@ -194,16 +194,29 @@
                 <!-- PLAN TO WATCH & WATCHED BUTTONS -->
                 @if(Auth::check() || session()->has('user'))
                     <div class="flex items-center gap-2 flex-wrap">
-                        <button type="button" 
-                                onclick="updateWatchlist('{{ route('watchlist.store') }}', '{{ $id }}', '{{ addslashes($title) }}', '{{ $movie['poster_path'] ?? '' }}', '{{ $mediaType }}', 'plan')" 
-                                class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
-                            ➕ Plan to Watch
-                        </button>
-                        <button type="button" 
-                                onclick="updateWatchlist('{{ route('watchlist.store') }}', '{{ $id }}', '{{ addslashes($title) }}', '{{ $movie['poster_path'] ?? '' }}', '{{ $mediaType }}', 'watched')" 
-                                class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
-                            ✓ Watched
-                        </button>
+                        <form action="{{ route('watchlist.store') }}" method="POST" class="inline">
+                            @csrf
+                            <input type="hidden" name="id" value="{{ $id }}">
+                            <input type="hidden" name="title" value="{{ $title }}">
+                            <input type="hidden" name="poster_path" value="{{ $movie['poster_path'] ?? '' }}">
+                            <input type="hidden" name="type" value="{{ $mediaType }}">
+                            <input type="hidden" name="status" value="plan">
+                            <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
+                                ➕ Plan to Watch
+                            </button>
+                        </form>
+
+                        <form action="{{ route('watchlist.store') }}" method="POST" class="inline">
+                            @csrf
+                            <input type="hidden" name="id" value="{{ $id }}">
+                            <input type="hidden" name="title" value="{{ $title }}">
+                            <input type="hidden" name="poster_path" value="{{ $movie['poster_path'] ?? '' }}">
+                            <input type="hidden" name="type" value="{{ $mediaType }}">
+                            <input type="hidden" name="status" value="watched">
+                            <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-gray-200 border border-neutral-700 text-xs font-bold px-4 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
+                                ✓ Watched
+                            </button>
+                        </form>
                     </div>
                 @else
                     <a href="{{ route('login') }}" class="bg-neutral-800 hover:bg-neutral-700 text-gray-300 border border-neutral-700 text-xs font-bold px-5 py-3 rounded-xl transition flex items-center gap-2 shadow-md">
@@ -274,7 +287,6 @@
                 </div>
             @endif
 
-           
             <!-- COMMENTS LIST CONTAINER -->
             <div class="space-y-4">
                 @if(isset($comments) && count($comments) > 0)
