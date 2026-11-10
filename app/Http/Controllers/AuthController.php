@@ -86,14 +86,14 @@ class AuthController extends Controller
         $password = $request->input('password');
 
         if (!empty($username) && strlen($password) >= 4) {
-            // I-save ang bagong user sa database gamit ang hashed password
+            // I-save ang bagong user sa database gamit ang hashed password at PostgreSQL primary key fix
             $userId = DB::table('users')->insertGetId([
                 'username' => $username,
                 'password' => Hash::make($password),
                 'is_admin' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ], 'id'); // <--- Idinagdag ang 'id' para sa PostgreSQL auto-increment compatibility
 
             session([
                 'user' => [
