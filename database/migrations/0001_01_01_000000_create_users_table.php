@@ -13,9 +13,13 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string('name'); // Idinagdag para sa seeder
+            $table->string('email')->unique()->nullable(); // Idinagdag para sa seeder
+            $table->timestamp('email_verified_at')->nullable(); // Idinagdag para sa seeder
             $table->string('username')->unique();
             $table->string('password');
             $table->boolean('is_admin')->default(0);
+            $table->rememberToken(); // Idinagdag din para sa remember_token field kung kinakailangan
             $table->timestamps();
         });
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth; // Idinagdag para sa tamang user authentication
 
 class WatchlistController extends Controller
 {
@@ -12,8 +13,14 @@ class WatchlistController extends Controller
      */
     public function index(Request $request)
     {
-        $user = session('user');
-        $userId = $user['id'] ?? 1;
+        // Gumamit ng Laravel Auth para makuha ang ID ng tunay na nakalogin na user
+        $userId = Auth::id();
+
+        // Kung walang nakalogin, i-redirect sa login page
+        if (!$userId) {
+            return redirect()->route('login');
+        }
+
         $status = $request->query('status');
 
         $query = DB::table('watchlist')->where('user_id', $userId);
@@ -33,8 +40,16 @@ class WatchlistController extends Controller
      */
     public function store(Request $request)
     {
-        $user = session('user');
-        $userId = $user['id'] ?? 1;
+        // Gumamit ng Laravel Auth para makuha ang ID ng tunay na nakalogin na user
+        $userId = Auth::id();
+
+        if (!$userId) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+            return redirect()->route('login');
+        }
+
         $movieId = $request->input('id');
         $status = $request->input('status', 'plan');
 

@@ -38,9 +38,11 @@ Route::get('/show/{id}', [MovieController::class, 'show']);
 Route::post('/movie/{id}/comment', [MovieController::class, 'addComment'])->name('comment.add');
 Route::get('/admin/comment/delete/{id}', [MovieController::class, 'deleteComment'])->name('admin.comment.delete');
 
-// Watchlist Routes (Centralized Tab System & AJAX Operations)
-Route::get('/watchlist', [WatchlistController::class, 'index'])->name('watchlist.index');
-Route::post('/watchlist/store', [WatchlistController::class, 'store'])->name('watchlist.store');
+// Watchlist Routes - Nakabalot sa 'auth' middleware para matiyak na hiwalay at secure bawat user account
+Route::middleware(['auth'])->group(function () {
+    Route::get('/watchlist', [WatchlistController::class, 'index'])->name('watchlist.index');
+    Route::post('/watchlist/store', [WatchlistController::class, 'store'])->name('watchlist.store');
+});
 
 // User Movie Requests & History
 Route::get('/request-movie', [RequestController::class, 'create'])->name('movie.request.form');

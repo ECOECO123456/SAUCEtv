@@ -72,9 +72,13 @@
             <a href="{{ route('home') }}" class="text-xs font-bold bg-neutral-800 hover:bg-neutral-700 text-gray-300 px-4 py-2 rounded-full border border-neutral-700 transition">
                 &larr; Back to Catalog
             </a>
-            @if(session()->has('user'))
+            @if(Auth::check() || session()->has('user'))
+                @php
+                    $loggedUser = Auth::user() ? Auth::user()->username : (session('user')['username'] ?? 'User');
+                    $isAdmin = Auth::user() ? (Auth::user()->is_admin ?? false) : ((session('user')['role'] ?? '') === 'admin');
+                @endphp
                 <span class="text-xs font-bold text-gray-300 bg-neutral-900 px-3 py-2 rounded-full border border-neutral-800">
-                    👤 {{ session('user')['username'] }} @if(session('user')['role'] === 'admin') <span class="text-brand">(Admin)</span> @endif
+                    👤 {{ $loggedUser }} @if($isAdmin) <span class="text-brand">(Admin)</span> @endif
                 </span>
                 <form action="{{ route('logout') }}" method="POST" class="inline">
                     @csrf
@@ -188,7 +192,7 @@
                 </div>
 
                 <!-- PLAN TO WATCH & WATCHED BUTTONS -->
-                @if(session()->has('user'))
+                @if(Auth::check() || session()->has('user'))
                     <div class="flex items-center gap-2 flex-wrap">
                         <button type="button" 
                                 onclick="updateWatchlist('{{ route('watchlist.store') }}', '{{ $id }}', '{{ addslashes($title) }}', '{{ $movie['poster_path'] ?? '' }}', '{{ $mediaType }}', 'plan')" 
@@ -236,7 +240,7 @@
                 💬 Reviews & Discussions
             </h2>
 
-            @if(session()->has('user'))
+            @if(Auth::check() || session()->has('user'))
                 <form action="{{ route('comment.add', ['id' => $movie['id']]) }}" method="POST" class="mb-8 space-y-4 bg-neutral-950 p-6 rounded-2xl border border-neutral-800">
                     @csrf
                     <div>
@@ -293,7 +297,7 @@
                             <p class="text-xs text-gray-300 leading-relaxed">{{ $commentText }}</p>
                         </div>
 
-                        @if(session()->has('user') && session('user')['role'] === 'admin')
+                        @if((Auth::check() && Auth::user()->is_admin) || (session()->has('user') && session('user')['role'] === 'admin'))
                         <a href="{{ route('admin.comment.delete', ['id' => $comId]) }}" onclick="return confirm('Delete this comment?')" class="text-red-400 hover:text-red-300 text-[10px] font-bold bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20 transition shrink-0">
                             Delete
                         </a>
